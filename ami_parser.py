@@ -15,23 +15,19 @@ def get_config_data():
 def connect_to_ast(ast_ip, ast_port):
     tc = telnetlib.Telnet(host=ast_ip, port=ast_port)
     tc.read_until(b'Asterisk Call Manager/5.0.5')
-    print('подключились!')
     tc.write(b'Action: Login\n')
     tc.write(b'Username: amiuser\n')
     tc.write(b'Secret: 123456\n')
     tc.write(b'\n')
     tc.write(b'\n')
     tc.read_until(b'Message: Authentication accepted')
-    print('login ok')
     return tc
 
 
 def parse_ami_action(action_lines, ast_events):
     event_list = action_lines.splitlines()
-    # print(action_list)
     try:
         event_name = ((event_list[0]).split(': '))[1]
-        #print(event_name)
         if event_name in ast_events:
             CALLERID_NAME, CALLERID_NUM, EXTEN = event_handler(event_list, event_name)
         return CALLERID_NAME, CALLERID_NUM, EXTEN, event_name
@@ -43,17 +39,14 @@ def event_handler(event_list, event_name):
     CALLERID_NUM = None
     EXTEN = None
     if event_name == 'DialBegin':
-        #print(event_list)
         CALLERID_NUM = ((event_list[5]).split(': '))[1]
         CALLERID_NAME = ((event_list[6]).split(': '))[1]
         EXTEN = ((event_list[12]).split(': '))[1]
     elif event_name == 'BridgeEnter':
-        #print(event_list)
         CALLERID_NUM = ((event_list[13]).split(': '))[1]
         CALLERID_NAME = ((event_list[14]).split(': '))[1]
         EXTEN = ((event_list[19]).split(': '))[1]
     elif event_name == 'Hangup':
-        #print(event_list)
         CALLERID_NUM = ((event_list[5]).split(': '))[1]
         CALLERID_NAME = ((event_list[6]).split(': '))[1]
         EXTEN = ((event_list[12]).split(': '))[1]
@@ -68,8 +61,6 @@ if __name__ == '__main__':
 
     while True:
         data = tc.read_until(b'\n\r\n')
-        # print('---------------------------------')
-        # print(data.decode())
         CALLERID_NAME, CALLERID_NUM, EXTEN, event_name = parse_ami_action(data.decode(), ast_events)
         if CALLERID_NUM:
             print(CALLERID_NAME, CALLERID_NUM, EXTEN, event_name)
